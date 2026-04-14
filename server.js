@@ -7,7 +7,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const rutasUsuarios = require('./Rutas/usuarios');
+const rutasUsuarios = require('./Rutas/Usuarios');
 const rutaIA = require('./Rutas/ia'); 
 
 app.use('/api/usuarios', rutasUsuarios);
