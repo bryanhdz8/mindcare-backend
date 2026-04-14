@@ -1,18 +1,21 @@
 const mysql = require('mysql2');
 
+// 🔥 CONEXIÓN A RAILWAY (TU BASE DE DATOS EN LA NUBE)
 const conexion = mysql.createConnection({
-  host: 'localhost',
+  host: 'monorail.proxy.rlwy.net',
   user: 'root',
-  password: '', 
-  database: 'mindcare'
+  password: 'YCDnSKfeiWnbxjShnbaxdzmNNWiJhfHO', // ← pega aquí tu contraseña real
+  database: 'railway',
+  port: 50884
 });
 
+// 🔌 CONECTAR
 conexion.connect((err) => {
   if (err) {
-    console.log('Error de conexión:', err);
-  } else {
-    console.log('Conectado a MySQL 🚀');
+    console.error('❌ Error de conexión a la base de datos:', err);
+    return;
   }
+  console.log('✅ Conectado a Railway 🚀');
 });
 
 module.exports = conexion;
