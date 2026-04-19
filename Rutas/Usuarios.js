@@ -79,29 +79,33 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// --- RECUPERAR CONTRASEÑA ACTUALIZADA ---
+// --- RECUPERAR CONTRASEÑA ---
 router.put('/recuperar-password', async (req, res) => {
   const { email, nuevaPassword } = req.body;
 
   console.log(">>> PETICIÓN RECIBIDA");
 
   try {
-    // Usamos los nombres exactos de tu Railway: "usuarios", "Correo electrónico" y "Contraseña"
+    // 1. Usamos backticks `` para proteger los nombres con espacios
+    // Fíjate bien: son acentos graves, no comillas simples.
     const sqlBuscar = "SELECT * FROM usuarios WHERE `Correo electrónico` = ?";
     const [resultados] = await conexion.query(sqlBuscar, [email]);
 
     if (resultados.length === 0) {
+      console.log(">>> El correo no existe en Railway");
       return res.status(404).json({ mensaje: 'Usuario no encontrado' });
     }
 
+    // 2. Aquí también usamos backticks para "Contraseña" y "Correo electrónico"
     const sqlUpdate = "UPDATE usuarios SET `Contraseña` = ? WHERE `Correo electrónico` = ?";
     await conexion.query(sqlUpdate, [nuevaPassword, email]);
     
+    console.log(">>> ¡ACTUALIZACIÓN EXITOSA EN RAILWAY!");
     res.json({ mensaje: 'Contraseña actualizada correctamente' });
 
   } catch (err) {
     console.error("!!! ERROR DE SQL:", err.message);
-    res.status(500).json({ mensaje: 'Error al actualizar', error: err.message });
+    res.status(500).json({ mensaje: 'Error al actualizar', detalle: err.message });
   }
 });
 
