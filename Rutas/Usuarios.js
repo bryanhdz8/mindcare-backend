@@ -9,12 +9,12 @@ const validarCorreo = (email) => {
 };
 
 const validarPassword = (password) => {
-  // Regex actualizada para ser más amigable con tus símbolos
-  const regex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?#]).{8,}$/;
+  // Acepta mayúsculas, números y símbolos (como el # que usas)
+  const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?#]).{8,}$/;
   return regex.test(password);
 };
 
-// --- REGISTRO ---
+// --- 1. REGISTRO ---
 router.post('/registro', async (req, res) => {
   const { nombre, email, password } = req.body;
 
@@ -23,15 +23,12 @@ router.post('/registro', async (req, res) => {
   }
 
   try {
-    // 1. Buscamos en 'usuarios' y 'Email'
     const [resultados] = await conexion.query("SELECT * FROM usuarios WHERE Email = ?", [email]);
 
     if (resultados.length > 0) {
       return res.status(400).json({ mensaje: 'El correo ya está registrado' });
     }
 
-    // 2. Insertamos con los nombres de tus columnas en inglés
-    // Nota: Si en Railway no tienes 'apellido' o 'fecha', quítalos de aquí
     const sqlInsert = "INSERT INTO usuarios (Nombre, Email, Password) VALUES (?, ?, ?)";
     await conexion.query(sqlInsert, [nombre, email, password]);
 
@@ -42,12 +39,11 @@ router.post('/registro', async (req, res) => {
   }
 });
 
-// --- LOGIN ---
+// --- 2. LOGIN ---
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    // Cambiado a 'usuarios', 'Email' y 'Password'
     const sql = "SELECT * FROM usuarios WHERE Email = ? AND Password = ?";
     const [resultados] = await conexion.query(sql, [email, password]);
 
@@ -65,7 +61,7 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// --- RECUPERAR CONTRASEÑA ---
+// --- 3. RECUPERAR CONTRASEÑA (Desde fuera del app) ---
 router.put('/recuperar-password', async (req, res) => {
   const { email, nuevaPassword } = req.body;
   try {
@@ -78,7 +74,54 @@ router.put('/recuperar-password', async (req, res) => {
     await conexion.query("UPDATE usuarios SET Password = ? WHERE Email = ?", [nuevaPassword, email]);
     res.json({ mensaje: 'Contraseña actualizada correctamente' });
   } catch (err) {
+    console.error("Error en Recuperar:", err.message);
     res.status(500).json({ mensaje: 'Error al actualizar' });
+  }
+});
+
+// --- 4. CAMBIAR CONTRASEÑA (Desde el Perfil/Seguridad) ---
+router.put('/password', async (req, res) => {
+  const { email, passwordActual, passwordNueva } = req.body;
+
+  if (!email || !passwordActual || !passwordNueva) {
+    return res.status(400).json({ mensaje: 'Faltan datos' });
+  }
+
+  if (!validarPassword(passwordNueva)) {
+    return res.status(400).json({
+      mensaje: 'La nueva contraseña debe tener mínimo 8 caracteres, una mayúscula, un número y un símbolo'
+    });
+  }
+
+  try {
+    const [resultados] = await conexion.query("SELECT * FROM usuarios WHERE Email = ?", [email]);
+
+    if (resultados.length === 0) {
+      return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+    }
+
+    // Verificamos que la contraseña actual coincida con la de la DB
+    if (resultados[0].Password !== passwordActual) {
+      return res.status(401).json({ mensaje: 'La contraseña actual es incorrecta' });
+    }
+
+    await conexion.query("UPDATE usuarios SET Password = ? WHERE Email = ?", [passwordNueva, email]);
+    res.json({ mensaje: 'Contraseña actualizada correctamente' });
+  } catch (err) {
+    console.error("Error en Cambio Perfil:", err.message);
+    res.status(500).json({ mensaje: 'Error del servidor' });
+  }
+});
+
+// --- 5. ACTUALIZAR NOMBRE PERFIL ---
+router.put('/actualizar', async (req, res) => {
+  const { email, nombre } = req.body;
+  try {
+    await conexion.query("UPDATE usuarios SET Nombre = ? WHERE Email = ?", [nombre, email]);
+    res.json({ mensaje: 'Perfil actualizado' });
+  } catch (err) {
+    console.error("Error en Actualizar Perfil:", err.message);
+    res.status(500).json({ mensaje: 'Error al actualizar nombre' });
   }
 });
 
