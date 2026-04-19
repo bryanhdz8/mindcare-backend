@@ -9,7 +9,6 @@ const validarCorreo = (email) => {
 };
 
 const validarPassword = (password) => {
-  // Acepta mayúsculas, números y símbolos (como el # que usas)
   const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?#]).{8,}$/;
   return regex.test(password);
 };
@@ -29,7 +28,8 @@ router.post('/registro', async (req, res) => {
       return res.status(400).json({ mensaje: 'El correo ya está registrado' });
     }
 
-    const sqlInsert = "INSERT INTO usuarios (Nombre, Email, Password) VALUES (?, ?, ?)";
+    // Agregamos 'verificado' con valor 0 (false) por defecto al crear cuenta
+    const sqlInsert = "INSERT INTO usuarios (Nombre, Email, Password, verificado) VALUES (?, ?, ?, 0)";
     await conexion.query(sqlInsert, [nombre, email, password]);
 
     res.json({ mensaje: 'Usuario guardado con éxito' });
@@ -44,7 +44,8 @@ router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const sql = "SELECT * FROM usuarios WHERE Email = ? AND Password = ?";
+    // Seleccionamos también 'verificado' y 'url_documento' para que la app los reciba
+    const sql = "SELECT id, Nombre, Email, Password, rol, edad, verificado, url_documento FROM usuarios WHERE Email = ? AND Password = ?";
     const [resultados] = await conexion.query(sql, [email, password]);
 
     if (resultados.length > 0) {
@@ -61,7 +62,7 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// --- 3. RECUPERAR CONTRASEÑA (Desde fuera del app) ---
+// --- 3. RECUPERAR CONTRASEÑA ---
 router.put('/recuperar-password', async (req, res) => {
   const { email, nuevaPassword } = req.body;
   try {
@@ -79,7 +80,7 @@ router.put('/recuperar-password', async (req, res) => {
   }
 });
 
-// --- 4. CAMBIAR CONTRASEÑA (Desde el Perfil/Seguridad) ---
+// --- 4. CAMBIAR CONTRASEÑA ---
 router.put('/password', async (req, res) => {
   const { email, passwordActual, passwordNueva } = req.body;
 
@@ -100,7 +101,6 @@ router.put('/password', async (req, res) => {
       return res.status(404).json({ mensaje: 'Usuario no encontrado' });
     }
 
-    // Verificamos que la contraseña actual coincida con la de la DB
     if (resultados[0].Password !== passwordActual) {
       return res.status(401).json({ mensaje: 'La contraseña actual es incorrecta' });
     }
@@ -115,12 +115,12 @@ router.put('/password', async (req, res) => {
 
 // --- ACTUALIZAR PERFIL COMPLETO ---
 router.put('/actualizar', async (req, res) => {
-  const { email, nombre, rol, edad } = req.body; 
+  const { email, nombre, rol, edad, url_documento } = req.body; 
   
   try {
-    // IMPORTANTE: Los nombres (Nombre, rol, edad, Email) deben coincidir exactos con Railway
-    const sql = "UPDATE usuarios SET Nombre = ?, rol = ?, edad = ? WHERE Email = ?";
-    await conexion.query(sql, [nombre, rol, edad, email]);
+    // Agregamos 'url_documento' al update para guardar la solicitud de verificación
+    const sql = "UPDATE usuarios SET Nombre = ?, rol = ?, edad = ?, url_documento = ? WHERE Email = ?";
+    await conexion.query(sql, [nombre, rol, edad, url_documento, email]);
     
     res.json({ mensaje: 'Perfil actualizado correctamente en la nube' });
   } catch (err) {
