@@ -79,33 +79,33 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// --- RECUPERAR CONTRASEÑA ---
+// --- RECUPERAR CONTRASEÑA (Versión con nombres en inglés) ---
 router.put('/recuperar-password', async (req, res) => {
   const { email, nuevaPassword } = req.body;
 
   console.log(">>> PETICIÓN RECIBIDA PARA:", email);
 
   try {
-    // 1. Usamos el nombre de la columna entre acentos graves ` ` 
-    // Asegúrate de que en VS Code se vean como pequeñas tildes inclinadas
-    const sqlBuscar = "SELECT * FROM usuarios WHERE `Correo electrónico` = ?";
+    // 1. Buscamos al usuario usando 'Email' (fíjate si la E es mayúscula o minúscula en Railway)
+    // Según tu imagen, parece ser 'Email' con E mayúscula y 'Password' con P mayúscula
+    const sqlBuscar = "SELECT * FROM usuarios WHERE Email = ?";
     const [resultados] = await conexion.query(sqlBuscar, [email]);
 
     if (resultados.length === 0) {
-      console.log(">>> Usuario no encontrado con ese correo");
+      console.log(">>> El correo no existe en la tabla");
       return res.status(404).json({ mensaje: 'Usuario no encontrado' });
     }
 
-    // 2. Aquí también protegemos los nombres
-    const sqlUpdate = "UPDATE usuarios SET `Contraseña` = ? WHERE `Correo electrónico` = ?";
+    // 2. Actualizamos la columna 'Password'
+    const sqlUpdate = "UPDATE usuarios SET Password = ? WHERE Email = ?";
     await conexion.query(sqlUpdate, [nuevaPassword, email]);
     
-    console.log(">>> ¡CAMBIO REALIZADO EN RAILWAY!");
+    console.log(">>> ¡CONTRASEÑA ACTUALIZADA EN RAILWAY!");
     res.json({ mensaje: 'Contraseña actualizada correctamente' });
 
   } catch (err) {
     console.error("!!! ERROR DE SQL:", err.message);
-    res.status(500).json({ mensaje: 'Error al actualizar', error: err.message });
+    res.status(500).json({ mensaje: 'Error al actualizar', detalle: err.message });
   }
 });
 
