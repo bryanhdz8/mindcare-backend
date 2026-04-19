@@ -83,29 +83,29 @@ router.post('/login', async (req, res) => {
 router.put('/recuperar-password', async (req, res) => {
   const { email, nuevaPassword } = req.body;
 
-  console.log(">>> PETICIÓN RECIBIDA");
+  console.log(">>> PETICIÓN RECIBIDA PARA:", email);
 
   try {
-    // 1. Usamos backticks `` para proteger los nombres con espacios
-    // Fíjate bien: son acentos graves, no comillas simples.
+    // 1. Usamos el nombre de la columna entre acentos graves ` ` 
+    // Asegúrate de que en VS Code se vean como pequeñas tildes inclinadas
     const sqlBuscar = "SELECT * FROM usuarios WHERE `Correo electrónico` = ?";
     const [resultados] = await conexion.query(sqlBuscar, [email]);
 
     if (resultados.length === 0) {
-      console.log(">>> El correo no existe en Railway");
+      console.log(">>> Usuario no encontrado con ese correo");
       return res.status(404).json({ mensaje: 'Usuario no encontrado' });
     }
 
-    // 2. Aquí también usamos backticks para "Contraseña" y "Correo electrónico"
+    // 2. Aquí también protegemos los nombres
     const sqlUpdate = "UPDATE usuarios SET `Contraseña` = ? WHERE `Correo electrónico` = ?";
     await conexion.query(sqlUpdate, [nuevaPassword, email]);
     
-    console.log(">>> ¡ACTUALIZACIÓN EXITOSA EN RAILWAY!");
+    console.log(">>> ¡CAMBIO REALIZADO EN RAILWAY!");
     res.json({ mensaje: 'Contraseña actualizada correctamente' });
 
   } catch (err) {
     console.error("!!! ERROR DE SQL:", err.message);
-    res.status(500).json({ mensaje: 'Error al actualizar', detalle: err.message });
+    res.status(500).json({ mensaje: 'Error al actualizar', error: err.message });
   }
 });
 
