@@ -6,8 +6,11 @@ const conexion = require('./Config/database');
 const app = express();
 
 // Configuración de CORS más robusta
-app.use(cors());
-app.use(express.json());
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // Rutas
 const rutasUsuarios = require('./Rutas/Usuarios');
@@ -17,7 +20,7 @@ app.use('/api/usuarios', rutasUsuarios);
 app.use('/api/ia', rutaIA); 
 
 app.get('/', (req, res) => {
-  res.send('Servidor MindCare funcionando 🚀');
+  res.send('Servidor MindCare funcionando');
 });
 
 // Importante: '0.0.0.0' es clave en Render para que sea accesible externamente
