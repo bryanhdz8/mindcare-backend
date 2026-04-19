@@ -113,15 +113,19 @@ router.put('/password', async (req, res) => {
   }
 });
 
-// --- 5. ACTUALIZAR NOMBRE PERFIL ---
+// --- ACTUALIZAR PERFIL COMPLETO ---
 router.put('/actualizar', async (req, res) => {
-  const { email, nombre } = req.body;
+  const { email, nombre, rol, edad } = req.body; 
+  
   try {
-    await conexion.query("UPDATE usuarios SET Nombre = ? WHERE Email = ?", [nombre, email]);
-    res.json({ mensaje: 'Perfil actualizado' });
+    // IMPORTANTE: Los nombres (Nombre, rol, edad, Email) deben coincidir exactos con Railway
+    const sql = "UPDATE usuarios SET Nombre = ?, rol = ?, edad = ? WHERE Email = ?";
+    await conexion.query(sql, [nombre, rol, edad, email]);
+    
+    res.json({ mensaje: 'Perfil actualizado correctamente en la nube' });
   } catch (err) {
-    console.error("Error en Actualizar Perfil:", err.message);
-    res.status(500).json({ mensaje: 'Error al actualizar nombre' });
+    console.error("Error al actualizar perfil:", err.message);
+    res.status(500).json({ mensaje: 'Error al actualizar', detalle: err.message });
   }
 });
 
