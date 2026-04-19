@@ -79,37 +79,29 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// --- RECUPERAR CONTRASEÑA (CON LOGS DE RASTREO) ---
+// --- RECUPERAR CONTRASEÑA ACTUALIZADA ---
 router.put('/recuperar-password', async (req, res) => {
   const { email, nuevaPassword } = req.body;
 
-  // LOG 1: Ver si los datos llegan al servidor
-  console.log(">>> PETICIÓN RECIBIDA EN BACKEND");
-  console.log(">>> Email:", email);
+  console.log(">>> PETICIÓN RECIBIDA");
 
   try {
-    const sqlBuscar = "SELECT * FROM USUARIO WHERE correo = ?";
+    // Usamos los nombres exactos de tu Railway: "usuarios", "Correo electrónico" y "Contraseña"
+    const sqlBuscar = "SELECT * FROM usuarios WHERE `Correo electrónico` = ?";
     const [resultados] = await conexion.query(sqlBuscar, [email]);
 
     if (resultados.length === 0) {
-      console.log(">>> RESULTADO: El usuario no existe en la DB");
       return res.status(404).json({ mensaje: 'Usuario no encontrado' });
     }
 
-    const sqlUpdate = "UPDATE USUARIO SET contrasena = ? WHERE correo = ?";
-    const [resultadoUpdate] = await conexion.query(sqlUpdate, [nuevaPassword, email]);
+    const sqlUpdate = "UPDATE usuarios SET `Contraseña` = ? WHERE `Correo electrónico` = ?";
+    await conexion.query(sqlUpdate, [nuevaPassword, email]);
     
-    // LOG 2: Ver si la base de datos aceptó el cambio
-    console.log(">>> UPDATE EXITOSO:", resultadoUpdate);
     res.json({ mensaje: 'Contraseña actualizada correctamente' });
 
   } catch (err) {
-    // LOG 3: Si hay un error, que nos diga exactamente QUÉ pasó
-    console.error("!!! ERROR CRÍTICO EN DB:", err.message);
-    res.status(500).json({ 
-        mensaje: 'Error al actualizar', 
-        error_tecnico: err.message 
-    });
+    console.error("!!! ERROR DE SQL:", err.message);
+    res.status(500).json({ mensaje: 'Error al actualizar', error: err.message });
   }
 });
 
