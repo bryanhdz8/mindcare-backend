@@ -79,23 +79,37 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// --- RECUPERAR CONTRASEÑA ---
+// --- RECUPERAR CONTRASEÑA (CON LOGS DE RASTREO) ---
 router.put('/recuperar-password', async (req, res) => {
   const { email, nuevaPassword } = req.body;
+
+  // LOG 1: Ver si los datos llegan al servidor
+  console.log(">>> PETICIÓN RECIBIDA EN BACKEND");
+  console.log(">>> Email:", email);
 
   try {
     const sqlBuscar = "SELECT * FROM USUARIO WHERE correo = ?";
     const [resultados] = await conexion.query(sqlBuscar, [email]);
 
     if (resultados.length === 0) {
+      console.log(">>> RESULTADO: El usuario no existe en la DB");
       return res.status(404).json({ mensaje: 'Usuario no encontrado' });
     }
 
     const sqlUpdate = "UPDATE USUARIO SET contrasena = ? WHERE correo = ?";
-    await conexion.query(sqlUpdate, [nuevaPassword, email]);
+    const [resultadoUpdate] = await conexion.query(sqlUpdate, [nuevaPassword, email]);
+    
+    // LOG 2: Ver si la base de datos aceptó el cambio
+    console.log(">>> UPDATE EXITOSO:", resultadoUpdate);
     res.json({ mensaje: 'Contraseña actualizada correctamente' });
+
   } catch (err) {
-    res.status(500).json({ mensaje: 'Error al actualizar' });
+    // LOG 3: Si hay un error, que nos diga exactamente QUÉ pasó
+    console.error("!!! ERROR CRÍTICO EN DB:", err.message);
+    res.status(500).json({ 
+        mensaje: 'Error al actualizar', 
+        error_tecnico: err.message 
+    });
   }
 });
 
@@ -131,7 +145,7 @@ router.put('/password', async (req, res) => {
   }
 });
 
-// --- RUTA EXTRA PARA EL PERFIL (Para que el botón Guardar funcione) ---
+// --- RUTA EXTRA PARA EL PERFIL ---
 router.put('/actualizar', async (req, res) => {
   const { email, nombre } = req.body;
   try {
@@ -143,4 +157,3 @@ router.put('/actualizar', async (req, res) => {
 });
 
 module.exports = router;
-// Cambio para forzar subida
