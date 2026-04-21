@@ -11,16 +11,21 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// 2. ¡ESTAS LÍNEAS FALTABAN! (Indispensables para leer lo que envía el celular)
+// 2. Middlewares para leer JSON
 app.use(express.json()); 
 app.use(express.urlencoded({ extended: true })); 
 
-// 3. Ahora sí, las rutas (siempre después de los lectores de JSON)
+// 3. Importación de Rutas
 const rutasUsuarios = require('./Rutas/Usuarios');
 const rutaIA = require('./Rutas/ia'); 
+const rutasPsicologos = require('./Rutas/Psicologos'); // NUEVA
+const rutasCitas = require('./Rutas/Citas');           // NUEVA
 
+// 4. Registro de Rutas
 app.use('/api/usuarios', rutasUsuarios);
 app.use('/api/ia', rutaIA); 
+app.use('/api/psicologos', rutasPsicologos); // NUEVA: Para listar doctores
+app.use('/api/citas', rutasCitas);           // NUEVA: Para agendar citas
 
 app.get('/', (req, res) => {
   res.send('Servidor MindCare funcionando');
